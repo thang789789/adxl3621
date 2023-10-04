@@ -1,0 +1,75 @@
+/*
+ ADXL362_SimpleRead.ino -  Simple XYZ axis reading example
+ for Analog Devices ADXL362 - Micropower 3-axis accelerometer
+ go to http://www.analog.com/ADXL362 for datasheet
+ 
+ 
+ License: CC BY-SA 3.0: Creative Commons Share-alike 3.0. Feel free 
+ to use and abuse this code however you'd like. If you find it useful
+ please attribute, and SHARE-ALIKE!
+ 
+ Created June 2012
+ by Anne Mahaffey - hosted on http://annem.github.com/ADXL362
+
+ Modified May 2013
+ by Jonathan Ruiz de Garibay
+ 
+Connect SCLK, MISO, MOSI, and CSB of ADXL362 to
+SCLK, MISO, MOSI, and DP 10 of Arduino 
+(check http://arduino.cc/en/Reference/SPI for details)
+ 
+*/ 
+
+#include <SPI.h>
+#include <ADXL362.h>
+#include <SoftSPI.h>
+// Pin 2 = MOSI,
+// Pin 3 = MISO,
+// Pin 4 = SCK
+// Pin 5 = cs
+SoftSPI mySPI(2, 3, 4);
+
+ADXL362 xl;
+
+int16_t temp;
+int16_t XValue, YValue, ZValue, Temperature;
+
+void setup(){
+  mySPI.begin();
+  Serial.begin(9600);
+  xl.begin(10);                  
+  xl.beginMeasure();             
+
+   pinMode(5, OUTPUT);
+  
+  // Cấu hình cảm biến ADXL362
+  digitalWrite(5, LOW); // Bắt đầu truyền dữ liệu
+  mySPI.transfer(0x0A); // Lệnh viết vào thanh ghi (Register Write)
+  mySPI.transfer(0x2D); // Địa chỉ thanh ghi (Điều khiển nguồn)
+  mySPI.transfer(0x02); // Giá trị (Chế độ chờ)
+  digitalWrite(5, HIGH); // Kết thúc truyền dữ liệu
+  delay(10);
+  Serial.println("Start Demo: Simple Read");
+}
+
+void loop(){
+
+  // Đọc dữ liệu gia tốc từ cảm biến ADXL362
+  digitalWrite(5, LOW); // Bắt đầu truyền dữ liệu
+  mySPI.transfer(0x0B); // Lệnh đọc từ thanh ghi (Register Read)
+  mySPI.transfer(0x0F); // Địa chỉ thanh ghi (Dữ liệu trục X, LSB)
+  int xDataLow = mySPI.transfer(0x00); // Đọc dữ liệu thấp
+  int xDataHigh = mySPI.transfer(0x00); // Đọc dữ liệu cao
+  digitalWrite(5, HIGH); // Kết thúc truyền dữ liệu
+
+  // Kết hợp dữ liệu thành giá trị gia tốc trục X
+  int xData = (xDataHigh << 8) | xDataLow;
+
+  // Hiển thị dữ liệu trên Serial Monitor
+  Serial.print("Gia tốc trục X: ");
+  Serial.println(xData);
+
+  delay(1000); // Chờ 1 giây trước khi đọc dữ liệu tiếp theo
+  
+ 
+}
